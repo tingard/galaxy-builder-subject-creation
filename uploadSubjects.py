@@ -35,7 +35,8 @@ pwd = getpass.getpass()
 Panoptes.connect(
     username=uname,
     password=pwd,
-    endpoint='https://panoptes-staging.zooniverse.org'
+    endpoint='https://panoptes-staging.zooniverse.org',
+    admin=True
 )
 project = Project.find(1820)
 subject_set = SubjectSet()

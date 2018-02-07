@@ -8,21 +8,22 @@ from astropy.io import fits
 import sdssCutoutGrab as scg
 import createSubjectsFunctions as csf
 
+
 # TODO: replace indexing with some kind of proper object ID
-# TODO: proper source extractor deblending
-# TODO: object search using objID, obtained through Coleman's GZ catalog?
 def main(objList, outFolder='subjects'):
     # objList is list of (ra, dec, petrotheta)s for target galaxies
     # make sure the outfolder exists
     if not os.path.exists(outFolder):
         os.mkdir(outFolder)
-    psfs, zeroPoints = [], []
+    psfs = []
     # cycle through the input objects
     for i, (ra, dec, petrotheta) in enumerate(objList):
         # search by ra, dec
         print('🛰  Looking for galaxy at {}, {}'.format(ra, dec))
         frame = scg.queryFromRaDec(ra, dec)
-        if not len(frame): continue
+        if not len(frame):
+            print("💩  Couldn\'t find any galaxies")
+            continue
         fileLoc = scg.getBandFits(frame[0])
         # read it in and crop out around the galaxy
         imageData = scg.cutFits(
@@ -31,14 +32,18 @@ def main(objList, outFolder='subjects'):
             size=(4 * petrotheta * u.arcsec, 4 * petrotheta * u.arcsec)
         )
         if imageData is False:
-            print('\t\033[31mReturned False from image Data\033[0m')
+            print('\t💀  \033[31mReturned False from image Data\033[0m')
             print('\tRa: {} Dec: {}'.format(ra, dec))
             continue
 
         # Use source extractor to identify objects TODO proper deblending
-        objects = csf.sourceExtractImage(imageData, fits.open(fileLoc)[2].data[0][0])
+        objects, segmentation_map = csf.sourceExtractImage(
+            imageData,
+            fits.open(fileLoc)[2].data[0][0]
+        )
         # create a true/false masking array
-        mask = csf.maskArrWithEllipses(imageData, objects[:-1])
+        mask = csf.maskArr(imageData, segmentation_map, objects[-1][0] + 1)
+
         # create the masked image
         maskedImageData = imageData[:]
         maskedImageData[mask] = 0
@@ -74,19 +79,22 @@ def main(objList, outFolder='subjects'):
             'width': imageData.shape[1],
             'height': imageData.shape[0],
         }
-        # write out the model (saving a gzipped and non-gzipped version for now)
+        # write out the model (saving a gzipped and non-gzipped version)
         modelFileName = '{}/model_{}.json'.format(outFolder, i)
         with open(modelFileName, 'w') as f:
             json.dump(model, f)
-        with open(modelFileName, 'rb') as f_in, gzip.open(modelFileName + '.gz', 'wb') as f_out:
+        with open(modelFileName, 'rb') as f_in, \
+                gzip.open(modelFileName + '.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
 
         # write out the difference
         diffFileName = '{}/difference_{}.json'.format(outFolder, i)
         with open(diffFileName, 'w') as f:
             json.dump(difference, f)
-        with open(diffFileName, 'rb') as f_in, gzip.open(diffFileName + '.gz', 'wb') as f_out:
+        with open(diffFileName, 'rb') as f_in, \
+                gzip.open(diffFileName + '.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+
 
 if __name__ == '__main__':
     main((
