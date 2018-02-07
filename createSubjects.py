@@ -25,9 +25,10 @@ def main(objList, outFolder='subjects'):
             print("💩  Couldn\'t find any galaxies")
             continue
         fileLoc = scg.getBandFits(frame[0])
+        fitsFile = fits.open(fileLoc)
         # read it in and crop out around the galaxy
         imageData = scg.cutFits(
-            fileLoc,
+            fitsFile,
             ra, dec,
             size=(4 * petrotheta * u.arcsec, 4 * petrotheta * u.arcsec)
         )
@@ -39,7 +40,7 @@ def main(objList, outFolder='subjects'):
         # Use source extractor to identify objects TODO proper deblending
         objects, segmentation_map = csf.sourceExtractImage(
             imageData,
-            fits.open(fileLoc)[2].data[0][0]
+            fitsFile[2].data[0][0]
         )
         # create a true/false masking array
         mask = csf.maskArr(imageData, segmentation_map, objects[-1][0] + 1)
@@ -55,7 +56,7 @@ def main(objList, outFolder='subjects'):
             resize=True
         )
         # Now we find the PSF
-        psf = csf.getPSF((ra, dec), frame[0], fileLoc)
+        psf = csf.getPSF((ra, dec), frame[0], fitsFile)
         c = 20
         # crop out most of the 0-ish stuff
         psfCut = psf[c:-c, c:-c]
@@ -96,7 +97,15 @@ def main(objList, outFolder='subjects'):
             shutil.copyfileobj(f_in, f_out)
 
 
+lucyGals = (
+    (160.65883, 23.95189, 22.3782),
+    (119.06931414139731, 11.662177891345076, 25.510479),
+    (236.14108, 10.29315, 27.98376),
+    (216.53496423791432, 5.237946739507734, 27.81166),
+    (248.7370584891894, 25.69259397115592, 26.418024),
+    (239.5076772567969, 14.963535027843466, 26.63623),
+    (178.44322153341767, 10.40313979646676, 18.855566),
+)
+
 if __name__ == '__main__':
-    main((
-        (236.14108, 10.29315, 27.98376),
-    ))
+    main(lucyGals)

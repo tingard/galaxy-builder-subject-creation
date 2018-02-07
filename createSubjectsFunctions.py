@@ -114,8 +114,8 @@ def saveImage(
     return im
 
 
-def getPSF(galCoord, frame, fitsImageLoc):
-    wcs = WCS(fits.open(fitsImageLoc)[0].header)
+def getPSF(galCoord, frame, fitsFile):
+    wcs = WCS(fitsFile[0].header)
     coords = wcs.wcs_world2pix([galCoord], 1)
     psfQueryUrl = 'https://data.sdss.org/sas/dr14/eboss/photo/redux/' + \
         '{rerun}/{run}/objcs/{camcol}/' + \
