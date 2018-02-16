@@ -2,7 +2,7 @@ import os
 import json
 import gzip
 import shutil
-from numpy import sum
+from numpy import sum, max
 import astropy.units as u
 from astropy.io import fits
 import sdssCutoutGrab as scg
@@ -24,7 +24,7 @@ def main(objList, outFolder='subjects'):
         if not len(frame):
             print("💩  Couldn\'t find any galaxies")
             continue
-        fileLoc = scg.getBandFits(frame[0])
+        fileLoc = scg.getBandFits(frame)
         fitsFile = fits.open(fileLoc)
         # read it in and crop out around the galaxy
         imageData = scg.cutFits(
@@ -50,13 +50,15 @@ def main(objList, outFolder='subjects'):
         maskedImageData[mask] = 0
 
         # apply an asinh stretch and save the image to the outfolder
+        resizeTo = (512, 512)
         csf.saveImage(
             csf.stretchArray(maskedImageData),
             fname="{}/image_{}.png".format(outFolder, i),
-            resize=True
+            resize=True,
+            size=resizeTo
         )
         # Now we find the PSF
-        psf = csf.getPSF((ra, dec), frame[0], fitsFile)
+        psf = csf.getPSF((ra, dec), frame, fitsFile)
         c = 20
         # crop out most of the 0-ish stuff
         psfCut = psf[c:-c, c:-c]
@@ -67,18 +69,42 @@ def main(objList, outFolder='subjects'):
         # generate the model json
         model = {
             'psf': psfCut.tolist(),
+            'psfWidth': psfCut.shape[1],
+            'psfHeight': psfCut.shape[0],
             'mask': mask.tolist(),
             'width': imageData.shape[1],
             'height': imageData.shape[0],
+            'imageWidth': resizeTo[0],
+            'imageHeight': int(
+                imageData.shape[0] / imageData.shape[1] * resizeTo[0]
+            )
         }
         # and the difference json
         difference = {
-            'imageData': imageData.tolist(),
             'psf': psfCut.tolist(),
             'psfWidth': psfCut.shape[1],
             'psfHeight': psfCut.shape[0],
-            'width': imageData.shape[1],
+            'mask': mask.tolist(),
+            'imageData': (imageData / max(imageData)).tolist(),
+            'size': imageData.shape[1],
             'height': imageData.shape[0],
+            'imageWidth': resizeTo[0],
+            'imageHeight': int(
+                imageData.shape[0] / imageData.shape[1] * resizeTo[0]
+            )
+        }
+        # and the subject metadata
+        metadata = {
+            '#originalBrightness': float(max(imageData)),
+            'Ra': ra,
+            'Dec': dec,
+            'petrotheta': petrotheta,
+            'SDSS_ID': int(frame.get('objID', 0)),
+            '#isModelling': True,
+            '#models': [
+                {'frame': 1, 'model': 'GALAXY_BUILDER_DIFFERENCE'},
+                {'frame': 2, 'model': 'GALAXY_BUILDER_MODEL'},
+            ]
         }
         # write out the model (saving a gzipped and non-gzipped version)
         modelFileName = '{}/model_{}.json'.format(outFolder, i)
@@ -95,6 +121,10 @@ def main(objList, outFolder='subjects'):
         with open(diffFileName, 'rb') as f_in, \
                 gzip.open(diffFileName + '.gz', 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
+
+        metaFileName = '{}/metadata_{}.json'.format(outFolder, i)
+        with open(metaFileName, 'w') as f:
+            json.dump(metadata, f)
 
 
 lucyGals = (

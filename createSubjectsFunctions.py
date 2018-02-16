@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from PIL import Image
 import os
-import time
+# import time
 from copy import copy
 
 import sdssCutoutGrab as scg
@@ -98,16 +98,19 @@ def showObjectsOnArr(arr, objects):
 
 def saveImage(
         arr, fname='testImage.png', resize=False, size=(512, 512),
-        resample=Image.HAMMING):
+        preserveAspectRatio=True, resample=Image.LANCZOS):
     # ensure image is normalised to [0, 255]
     print('📷  Saving image to {}'.format(fname))
-    arr = (arr - np.amin(arr)) / np.amax(arr - np.amin(arr)) * 255
+    arr = (arr.transpose() - np.amin(arr)) / np.amax(arr - np.amin(arr)) * 255
     # cast to uint8 with a weird coordinate swap (idk why)
     im = Image.fromarray(
         np.uint8(np.flipud(np.swapaxes(np.flipud(arr), 0, 1)))
     )
     # want to preserve aspect ratio, so increase the width to provided width
-    correctedSize = (size[0], int(im.size[1] / im.size[0] * size[0]))
+    if preserveAspectRatio:
+        correctedSize = (size[0], int(im.size[1] / im.size[0] * size[0]))
+    else:
+        correctedSize = size[:]
     if resize:
         im = im.resize(correctedSize, resample)
     im.save(fname)
