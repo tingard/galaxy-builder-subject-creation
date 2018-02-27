@@ -2,7 +2,7 @@ import os
 import json
 import gzip
 import shutil
-from numpy import sum, max
+from numpy import sum, max, array
 import astropy.units as u
 from astropy.io import fits
 import sdssCutoutGrab as scg
@@ -52,7 +52,7 @@ def main(objList, outFolder='subjects'):
         # apply an asinh stretch and save the image to the outfolder
         resizeTo = (512, 512)
         csf.saveImage(
-            csf.stretchArray(maskedImageData),
+            csf.stretchArray(maskedImageData[:, ::-1]),
             fname="{}/image_{}.png".format(outFolder, i),
             resize=True,
             size=resizeTo
@@ -71,7 +71,6 @@ def main(objList, outFolder='subjects'):
             'psf': psfCut.tolist(),
             'psfWidth': psfCut.shape[1],
             'psfHeight': psfCut.shape[0],
-            'mask': mask.tolist(),
             'width': imageData.shape[1],
             'height': imageData.shape[0],
             'imageWidth': resizeTo[0],
@@ -84,7 +83,7 @@ def main(objList, outFolder='subjects'):
             'psf': psfCut.tolist(),
             'psfWidth': psfCut.shape[1],
             'psfHeight': psfCut.shape[0],
-            'mask': mask.tolist(),
+            'mask': array(mask, dtype=float).tolist(),
             'imageData': (imageData / max(imageData)).tolist(),
             'size': imageData.shape[1],
             'height': imageData.shape[0],
