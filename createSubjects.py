@@ -58,7 +58,7 @@ def main(objList, outFolder='subjects'):
             size=resizeTo
         )
         # Now we find the PSF
-        psf = csf.getPSF((ra, dec), frame, fitsFile)
+        psf = scg.getPSF((ra, dec), frame, fitsFile)
         c = 20
         # crop out most of the 0-ish stuff
         psfCut = psf[c:-c, c:-c]
