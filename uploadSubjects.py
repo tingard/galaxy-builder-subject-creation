@@ -5,6 +5,18 @@ import time
 # import numpy as np
 
 
+def addLocation(subjectObj, locationDict):
+    fPath = next(iter(locationDict.values()))
+    if os.path.isfile(fPath):
+        with open(fPath, 'rb') as f:
+            media_data = f.read()
+        media_type = next(iter(locationDict.keys()))
+        subjectObj.locations.append(media_type)
+        subjectObj._media_files.append(media_data)
+        return True
+    return False
+
+
 def uploadSubjectToSet(project, subjectSet, locationsList, metadataList):
     # imagePath can be string or list, metadata must be same dimension
     if not len(locationsList) == len(metadataList):
@@ -19,10 +31,12 @@ def uploadSubjectToSet(project, subjectSet, locationsList, metadataList):
         subjects[-1].links.project = project
         # actual galaxy image
         subjects[-1].add_location(locations[0])
+        # the json subjects need to be added in a more manual way so we can
+        # spceify a MIME type
         # comparison between model and image
-        subjects[-1].add_location({'application/json': locations[1]})
-        # model
-        subjects[-1].add_location({'application/json': locations[2]})
+        addLocation(subjects[-1], {'application/json': locations[1]})
+        # and now just the model
+        addLocation(subjects[-1], {'application/json': locations[2]})
         for k, v in meta.items():
             subjects[-1].metadata[k] = v
         subjects[-1].save()
