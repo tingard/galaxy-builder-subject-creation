@@ -2,6 +2,7 @@ from panoptes_client import SubjectSet, Subject, Project, Panoptes
 import getpass
 import os
 import time
+import json
 # import numpy as np
 
 
@@ -59,16 +60,6 @@ subject_set.display_name = 'Test_subject_set_' + str(int(time.time()))
 subject_set.save()
 
 loc = os.path.abspath(os.path.dirname(__file__))
-metadata = {
-    'SDSS_ID': 1234567,
-    'Ra': 0.0,
-    'Dec': 0.0,
-    '#isModelling': True,
-    '#models': [
-        {'frame': 1, 'model': 'GALAXY_BUILDER_DIFFERENCE'},
-        {'frame': 2, 'model': 'GALAXY_BUILDER_MODEL'},
-    ]
-}
 
 subjects = os.listdir(loc + '/subjects')
 
@@ -76,6 +67,11 @@ subjects = os.listdir(loc + '/subjects')
 #       (not having 12,000+ files in a folder...)
 for i in range(20):
     if 'image_{}.png'.format(i) in subjects:
+        try:
+            with open('{}/subjects/metadata_{}.json') as f:
+                metadata = json.load(f)
+        except IOError:
+            metadata = {}
         subject_set = uploadSubjectToSet(
             project, subject_set,
             [[j.format(loc, i) for j in (
@@ -83,16 +79,7 @@ for i in range(20):
                 '{}/subjects/difference_{}.json',
                 '{}/subjects/model_{}.json'
             )]],  # locations
-            [{
-                'SDSS_ID': '1234567',  # TODO: link this to actual ID
-                'ra': 0.0000,  # TODO: link this to actual ID
-                'dec': 0.0000,  # TODO: link this to actual ID
-                'isModelling': True,
-                'models': [
-                    {'frame': 1, 'model': 'GALAXY_BUILDER_DIFFERENCE'},
-                    {'frame': 2, 'model': 'GALAXY_BUILDER_MODEL'},
-                ]
-            }]  # metadata
+            [metadata],
         )
     else:
         break
