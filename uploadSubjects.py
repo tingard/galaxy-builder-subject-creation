@@ -68,7 +68,7 @@ subjects = os.listdir(loc + '/subjects')
 for i in range(20):
     if 'image_{}.png'.format(i) in subjects:
         try:
-            with open('{}/subjects/metadata_{}.json') as f:
+            with open('{}/subjects/metadata_{}.json'.format(loc, i)) as f:
                 metadata = json.load(f)
         except IOError:
             metadata = {}
