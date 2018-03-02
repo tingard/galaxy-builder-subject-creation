@@ -85,7 +85,7 @@ def main(objList, outFolder='subjects'):
             'psfHeight': psfCut.shape[0],
             'mask': array(mask, dtype=float).tolist(),
             'imageData': (imageData / max(imageData)).tolist(),
-            'size': imageData.shape[1],
+            'width': imageData.shape[1],
             'height': imageData.shape[0],
             'imageWidth': resizeTo[0],
             'imageHeight': int(
