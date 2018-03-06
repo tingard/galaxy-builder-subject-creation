@@ -14,10 +14,13 @@ import sdssCutoutGrab as scg
 
 
 def stretchArray(arr, a=0.1):
-    arr = (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr)))
-    return np.arcsinh(
+    arr = (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr))) * 255
+    print('stretching array')
+    arr = np.arcsinh(
         (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr))) / a
     ) / np.arcsinh(1 / a)
+    arr = (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr)))
+    return arr
 
 
 def inverseArcsinh(arr, a=0.1):
