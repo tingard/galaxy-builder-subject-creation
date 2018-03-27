@@ -41,45 +41,51 @@ def uploadSubjectToSet(project, subjectSet, locationsList, metadataList):
         for k, v in meta.items():
             subjects[-1].metadata[k] = v
         subjects[-1].save()
-    subject_set.add(subjects)
-    return subject_set
+    subjectSet.add(subjects)
+    return subjectSet
 
 
-uname = input('Enter your username: ')
-pwd = getpass.getpass()
-Panoptes.connect(
-    username=uname,
-    password=pwd,
-    endpoint='https://panoptes-staging.zooniverse.org',
-    admin=True
-)
-project = Project.find(1820)
-subject_set = SubjectSet()
-subject_set.links.project = project
-subject_set.display_name = 'Test_subject_set_' + str(int(time.time()))
-subject_set.save()
+def main(production=False):
+    uname = input('Enter your username: ')
+    pwd = getpass.getpass()
+    Panoptes.connect(
+        username=uname,
+        password=pwd,
+        endpoint='https://panoptes-staging.zooniverse.org',
+        admin=True
+    )
+    pId = 5590 if production else 1820
+    project = Project.find(pId)
+    subject_set = SubjectSet()
+    subject_set.links.project = project
+    subject_set.display_name = 'Test_subject_set_' + str(int(time.time()))
+    subject_set.save()
 
-loc = os.path.abspath(os.path.dirname(__file__))
+    loc = os.path.abspath(os.path.dirname(__file__))
 
-subjects = os.listdir(loc + '/subjects')
+    subjects = os.listdir(loc + '/subjects')
 
-# TODO: change subject directory structure to be more efficient
-#       (not having 12,000+ files in a folder...)
-for i in range(20):
-    if 'image_{}.png'.format(i) in subjects:
-        try:
-            with open('{}/subjects/metadata_{}.json'.format(loc, i)) as f:
-                metadata = json.load(f)
-        except IOError:
-            metadata = {}
-        subject_set = uploadSubjectToSet(
-            project, subject_set,
-            [[j.format(loc, i) for j in (
-                '{}/subjects/image_{}.png',
-                '{}/subjects/difference_{}.json',
-                '{}/subjects/model_{}.json'
-            )]],  # locations
-            [metadata],
-        )
-    else:
-        break
+    # TODO: change subject directory structure to be more efficient
+    #       (not having 12,000+ files in a folder...)
+    for i in range(20):
+        if 'image_{}.png'.format(i) in subjects:
+            try:
+                with open('{}/subjects/metadata_{}.json'.format(loc, i)) as f:
+                    metadata = json.load(f)
+            except IOError:
+                metadata = {}
+            subject_set = uploadSubjectToSet(
+                project, subject_set,
+                [[j.format(loc, i) for j in (
+                    '{}/subjects/image_{}.png',
+                    '{}/subjects/difference_{}.json',
+                    '{}/subjects/model_{}.json'
+                )]],  # locations
+                [metadata],
+            )
+        else:
+            break
+
+
+if __name__ == '__main__':
+    main()

@@ -1,25 +1,23 @@
-import sdss_psf
+# import sdss_psf
 import numpy as np
 import sep
-from astropy.wcs import WCS
-from astropy.io import fits
+# from astropy.wcs import WCS
+# from astropy.io import fits
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from PIL import Image
-import os
+# import os
 # import time
 from copy import copy
 
-import sdssCutoutGrab as scg
+# import sdssCutoutGrab as scg
 
 
 def stretchArray(arr, a=0.1):
-    arr = (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr))) * 255
-    print('stretching array')
+    arr = (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr)))
     arr = np.arcsinh(
         (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr))) / a
     ) / np.arcsinh(1 / a)
-    arr = (arr - np.amin(arr)) / (np.amax(arr - np.amin(arr)))
     return arr
 
 
@@ -118,24 +116,3 @@ def saveImage(
         im = im.resize(correctedSize, resample)
     im.save(fname)
     return im
-
-
-# def getPSF(galCoord, frame, fitsFile,
-#            fname='./tmpPsfFile.fit', deleteOnComplete=True):
-#     wcs = WCS(fitsFile[0].header)
-#     coords = wcs.wcs_world2pix([galCoord], 1)
-#     psfQueryUrl = 'https://data.sdss.org/sas/dr14/eboss/photo/redux/' + \
-#         '{rerun}/{run}/objcs/{camcol}/' + \
-#         'psField-{run:06d}-{camcol}-{field:04d}.fit'
-#     scg.downloadFile(
-#         psfQueryUrl.format(**frame),
-#         fname,
-#         overwrite=True,
-#         decompress=False
-#     )
-#     psfield = fits.open(fname)
-#     bandnum = 'ugriz'.index('r')
-#     hdu = psfield[bandnum + 1]
-#     if deleteOnComplete:
-#         os.remove(fname)
-#     return sdss_psf.sdss_psf_at_points(hdu, *coords[0])
