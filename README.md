@@ -1,8 +1,8 @@
 # Galaxy-builder subject creation
 Helper scripts for subject creation for galaxy builder
 
-`createSubjects.py` Requires [SDSS_cutoutGrab](https://github.com/tingard/SDSS_cutoutGrab) as an installed module.
-Also requires:
+Requires:
+- [SDSS_cutoutGrab](https://github.com/tingard/SDSS_cutoutGrab)
 - Numpy
 - Scipy
 - Matplotlib
